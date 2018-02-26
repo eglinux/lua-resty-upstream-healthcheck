@@ -1,3 +1,10 @@
+Changes in this fork
+====================
+
+Added all_down flag. It indicates whether all peers are reported to be down for particular upstream. If such has happened healthchecker will switch all peers to up state. This has to prevent possible miss-configuration of health-checks.
+
+Same as default behavior of AWS load balancer
+
 Name
 ====
 
