@@ -731,18 +731,22 @@ local function gen_peers_status_info(peers, bits, idx)
         bits[idx] = "        "
         bits[idx + 1] = peer.name
         if peer.down then
-            bits[idx + 2] = " DOWN\n"
+            bits[idx + 2] = " DOWN"
         else
-            bits[idx + 2] = " up\n"
+            bits[idx + 2] = " up"
         end
         idx = idx + 3
+
+        bits[idx] = " connections: "
+        bits[idx + 1] = peer.conns .. "\n"
+        idx = idx + 2
     end
     return idx
 end
 
 local function gen_peers_status_info_json(peers, bits, idx)
     local npeers = #peers
-
+    
     if npeers == 0 then
         bits[idx] = "[]"
         idx = idx + 1
@@ -760,12 +764,15 @@ local function gen_peers_status_info_json(peers, bits, idx)
         bits[idx] = "\"status\": "
         idx = idx + 1
         if peer.down then
-            bits[idx] = "\"down\"}"
+            bits[idx] = "\"down\","
         else
-            bits[idx] = "\"up\"}"
+            bits[idx] = "\"up\","
         end
         idx = idx + 1
-
+        
+        bits[idx] = "\"connections\": " .. peer.conns .. "}"
+        idx = idx + 1    
+        
         if i == npeers then
             bits[idx] = "]"
         else
@@ -829,12 +836,75 @@ function _M.status_page()
     return concat(bits)
 end
 
+function _M.status_page_json()
+    -- generate a JSON page
+    local us, err = get_upstreams()
+    if not us then
+        return "failed to get upstream names: " .. err
+    end
+
+    local n = #us
+    local bits = new_tab(n * 20, 0)
+    local idx = 1
+    for i = 1, n do
+        if i == 1 then
+            bits[idx] = "{"
+            idx = idx + 1
+        end
+
+        local u = us[i]
+        bits[idx] = "\"" .. u .. "\":"
+        idx = idx + 1
+
+        bits[idx] = "{\"checkers\":"
+        idx = idx + 1
+        local ncheckers = upstream_checker_statuses[u]
+        if not ncheckers or ncheckers == 0 then
+            bits[idx] = "\"no\","
+            idx = idx + 1
+        else
+            bits[idx] = "\"yes\","
+            idx = idx + 1
+        end            
+
+        bits[idx] = "\"primary_peers\":"
+        idx = idx + 1
+
+        local peers, err = get_primary_peers(u)
+        if not peers then
+            return "failed to get primary peers in upstream " .. u .. ": "
+                    .. err
+        end
+
+        idx = gen_peers_status_info_json(peers, bits, idx)
+
+        bits[idx] = ",\"backup_peers\":"
+        idx = idx + 1
+
+        peers, err = get_backup_peers(u)
+        if not peers then
+            return "failed to get backup peers in upstream " .. u .. ": "
+                    .. err
+        end
+
+        idx = gen_peers_status_info_json(peers, bits, idx)
+
+        if i == n then
+            bits[idx] = "}}"
+        else
+            bits[idx] = "},"
+            idx = idx + 1
+        end
+    end
+    return concat(bits)
+end
+
 function _M.status_page_json_for_upstream(upstream)
     -- generate a JSON page for given upstream
     local u = upstream
     local bits = new_tab(20, 0)
     local idx = 1
-
+    
     bits[idx] = "{"
     idx = idx + 1
 
