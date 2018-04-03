@@ -735,11 +735,11 @@ local function gen_peers_status_info(peers, bits, idx)
         else
             bits[idx + 2] = " up"
         end
-		idx = idx + 3
+        idx = idx + 3
 
-		bits[idx] = " connections: "
-		bits[idx + 1] = peer.conns .. "\n"
-		idx = idx + 2
+        bits[idx] = " connections: "
+        bits[idx + 1] = peer.conns .. "\n"
+        idx = idx + 2
     end
     return idx
 end
@@ -767,12 +767,12 @@ local function gen_peers_status_info_json(peers, bits, idx)
             bits[idx] = "\"down\","
         else
             bits[idx] = "\"up\","
-		end
+        end
         idx = idx + 1
-		
-		bits[idx] = "\"connections\": " .. peer.conns .. "}"
-		idx = idx + 1	
-		
+        
+        bits[idx] = "\"connections\": " .. peer.conns .. "}"
+        idx = idx + 1    
+        
         if i == npeers then
             bits[idx] = "]"
         else
